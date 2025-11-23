@@ -8,10 +8,21 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OpenTelemetry.Metrics;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(metricsBuilder =>
+    {
+        metricsBuilder.AddRuntimeInstrumentation()
+                      .AddAspNetCoreInstrumentation()
+                      .AddHttpClientInstrumentation()
+                      .AddPrometheusExporter();
+    });
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {
@@ -149,6 +160,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.MapPrometheusScrapingEndpoint();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseHttpsRedirection();
