@@ -1,0 +1,89 @@
+using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
+using System.Text;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+
+namespace controller_api_test.Controllers;
+
+
+[ApiVersion("1.0")]
+[ApiController]
+[Route("v{version:apiVersion}/[controller]")]
+public class UsersController(UserManager<IdentityUser> userManager, IConfiguration config) : ControllerBase
+{
+    private readonly UserManager<IdentityUser> _userManager = userManager;
+    private readonly IConfiguration _config = config;
+
+    [HttpPost(Name = "CreateUser")]
+    public async Task<ActionResult<User>> CreateUser(CreateUserDto createUserDto)
+    {
+        var user = new IdentityUser
+        {
+            UserName = createUserDto.Email,
+            Email = createUserDto.Email
+        };
+
+        var result = await _userManager.CreateAsync(user, createUserDto.Password);
+        if (!result.Succeeded)
+            return BadRequest(result.Errors);
+
+        // Assign default permission claim
+        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("permission", "movies:read"));
+
+        // Generate email confirmation token (activation)
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+        // Return token to client (or send via email)
+        return Ok(new { user.Id, user.Email, ActivationToken = token });
+    }
+
+
+    [HttpPut(Name = "ActivateUser")]
+    [Route("activated")]
+    public async Task<ActionResult<User>> ActivateUser(ActivateUserDto activateUserDto)
+    {
+        var user = await _userManager.FindByEmailAsync(activateUserDto.Email);
+        if (user == null) return NotFound();
+
+        var result = await _userManager.ConfirmEmailAsync(user, activateUserDto.Token);
+        if (!result.Succeeded) return BadRequest(result.Errors);
+
+        return Ok(new { user.Id, user.Email, Activated = true });
+    }
+
+    [HttpPost(Name = "LoginUser")]
+    [Route("login")]
+    public async Task<ActionResult<User>> LoginUser(LoginUserDto loginUserDto)
+    {
+        var user = await _userManager.FindByEmailAsync(loginUserDto.Email);
+        if (user == null || !await _userManager.CheckPasswordAsync(user, loginUserDto.Password))
+            return Unauthorized();
+
+        var claims = await _userManager.GetClaimsAsync(user);
+
+        var jwtKey = _config["Jwt:Key"]!;
+        var jwtIssuer = _config["Jwt:Issuer"]!;
+        var jwtAudience = _config["Jwt:Audience"]!;
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+
+        var token = new JwtSecurityToken(
+            issuer: jwtIssuer,
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(4),
+            audience: jwtAudience,
+            signingCredentials: creds
+        );
+
+        return Ok(new
+        {
+            token = new JwtSecurityTokenHandler().WriteToken(token)
+        });
+    }
+}
+
+
