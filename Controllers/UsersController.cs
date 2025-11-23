@@ -1,9 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
-using Asp.Versioning;
-using System.Text;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using Asp.Versioning;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 
 namespace controller_api_test.Controllers;
 
@@ -17,7 +17,7 @@ public class UsersController(UserManager<IdentityUser> userManager, IConfigurati
     private readonly IConfiguration _config = config;
 
     [HttpPost(Name = "CreateUser")]
-    public async Task<ActionResult<User>> CreateUser(CreateUserDto createUserDto)
+    public async Task<ActionResult> CreateUser(CreateUserDto createUserDto)
     {
         var user = new IdentityUser
         {
@@ -42,7 +42,7 @@ public class UsersController(UserManager<IdentityUser> userManager, IConfigurati
 
     [HttpPut(Name = "ActivateUser")]
     [Route("activated")]
-    public async Task<ActionResult<User>> ActivateUser(ActivateUserDto activateUserDto)
+    public async Task<ActionResult> ActivateUser(ActivateUserDto activateUserDto)
     {
         var user = await _userManager.FindByEmailAsync(activateUserDto.Email);
         if (user == null) return NotFound();
@@ -55,7 +55,7 @@ public class UsersController(UserManager<IdentityUser> userManager, IConfigurati
 
     [HttpPost(Name = "LoginUser")]
     [Route("login")]
-    public async Task<ActionResult<User>> LoginUser(LoginUserDto loginUserDto)
+    public async Task<ActionResult> LoginUser(LoginUserDto loginUserDto)
     {
         var user = await _userManager.FindByEmailAsync(loginUserDto.Email);
         if (user == null || !await _userManager.CheckPasswordAsync(user, loginUserDto.Password))

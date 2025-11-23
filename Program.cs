@@ -1,13 +1,12 @@
+using System.Text;
+using System.Text.Json;
 using Asp.Versioning;
-using Microsoft.AspNetCore.Identity;
+using controller_api_test;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
-
-using controller_api_test;
-using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
