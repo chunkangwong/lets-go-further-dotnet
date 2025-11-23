@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Threading.RateLimiting;
 using Asp.Versioning;
 using controller_api_test;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -22,6 +23,25 @@ builder.Services.AddCors(options =>
               .WithMethods("POST", "PUT", "PATCH", "DELETE")
               .AllowCredentials();
     });
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    // Read rate limiter settings from config
+    var rps = builder.Configuration.GetValue<int>("RateLimiting:Rps", 10);        // default 10
+    var burst = builder.Configuration.GetValue<int>("RateLimiting:Burst", 0);     // default 0
+    var windowSeconds = builder.Configuration.GetValue<int>("RateLimiting:WindowSeconds", 60); // default 60s
+
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.User.Identity?.Name ?? httpContext.Request.Headers.Host.ToString(),
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = rps,
+                QueueLimit = burst,
+                Window = TimeSpan.FromSeconds(windowSeconds)
+            }));
 });
 
 builder.Services.AddControllers();
@@ -133,6 +153,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseHttpsRedirection();
 app.UseCors("TrustedOrigins");
+app.UseRateLimiter();
 app.MapControllers();
 
 app.Run();
