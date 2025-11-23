@@ -10,12 +10,19 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-var jwtKey = builder.Configuration["Jwt:Key"]!;
-var jwtIssuer = builder.Configuration["Jwt:Issuer"]!;
-var jwtAudience = builder.Configuration["Jwt:Audience"]!;
-
 // Add services to the container.
+// Configure CORS
+builder.Services.AddCors(options =>
+{
+    var trustedOrigins = builder.Configuration["CORS:TrustedOrigins"]!;
+    options.AddPolicy("TrustedOrigins", policy =>
+    {
+        policy.WithOrigins(trustedOrigins.Split(',')) // replace with your trusted origins
+              .WithHeaders("Authorization", "Content-Type")
+              .WithMethods("POST", "PUT", "PATCH", "DELETE")
+              .AllowCredentials();
+    });
+});
 
 builder.Services.AddControllers();
 
@@ -38,6 +45,10 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
+    var jwtKey = builder.Configuration["Jwt:Key"]!;
+    var jwtIssuer = builder.Configuration["Jwt:Issuer"]!;
+    var jwtAudience = builder.Configuration["Jwt:Audience"]!;
+
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -121,6 +132,7 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseHttpsRedirection();
+app.UseCors("TrustedOrigins");
 app.MapControllers();
 
 app.Run();
