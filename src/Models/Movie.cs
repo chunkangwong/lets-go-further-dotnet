@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace controller_api_test;
+namespace controller_api_test.src.Models;
 
 public class Movie
 {

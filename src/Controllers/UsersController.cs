@@ -1,11 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Asp.Versioning;
+using controller_api_test.src.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
-namespace controller_api_test.Controllers;
+namespace controller_api_test.src.Controllers;
 
 
 [ApiVersion("1.0")]

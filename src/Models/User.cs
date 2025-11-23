@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace controller_api_test;
+namespace controller_api_test.src.Models;
 
 public class CreateUserDto
 {
