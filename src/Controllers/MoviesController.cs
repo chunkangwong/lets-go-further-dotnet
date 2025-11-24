@@ -9,6 +9,7 @@ namespace controller_api_test.src.Controllers;
 [ApiVersion("1.0")]
 [ApiController]
 [Route("v{version:apiVersion}/[controller]")]
+[Authorize(Policy = "EmailConfirmed")]
 public class MoviesController(AppDbContext dbContext) : ControllerBase
 {
     private readonly AppDbContext _dbContext = dbContext;

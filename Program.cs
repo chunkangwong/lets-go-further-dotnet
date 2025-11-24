@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.RateLimiting;
 using Asp.Versioning;
+using controller_api_test.src.Factories;
 using controller_api_test.src.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -134,6 +135,8 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
+builder.Services.AddScoped<IUserClaimsPrincipalFactory<IdentityUser>, EmailConfirmedUserClaimsPrincipalFactory>();
+
 // Add this configuration before builder.Build()
 var authorizationBuilder = builder.Services.AddAuthorizationBuilder();
 
@@ -144,6 +147,10 @@ authorizationBuilder.SetDefaultPolicy(new AuthorizationPolicyBuilder(
     .Build());
 
 // 2. Define your existing named policies and explicitly add the JWT scheme
+authorizationBuilder.AddPolicy("EmailConfirmed", policy =>
+    policy.RequireClaim("email_confirmed", "true")
+          .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme));
+
 authorizationBuilder.AddPolicy("MoviesRead", policy =>
     policy.RequireClaim("permission", "movies:read")
           .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme));

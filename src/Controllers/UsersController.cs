@@ -12,9 +12,10 @@ namespace controller_api_test.src.Controllers;
 [ApiVersion("1.0")]
 [ApiController]
 [Route("v{version:apiVersion}/[controller]")]
-public class UsersController(UserManager<IdentityUser> userManager, IConfiguration config) : ControllerBase
+public class UsersController(UserManager<IdentityUser> userManager, IUserClaimsPrincipalFactory<IdentityUser> userClaimsPrincipalFactory, IConfiguration config) : ControllerBase
 {
     private readonly UserManager<IdentityUser> _userManager = userManager;
+    private readonly IUserClaimsPrincipalFactory<IdentityUser> _userClaimsPrincipalFactory = userClaimsPrincipalFactory;
     private readonly IConfiguration _config = config;
 
     [HttpPost(Name = "CreateUser")]
@@ -41,8 +42,7 @@ public class UsersController(UserManager<IdentityUser> userManager, IConfigurati
     }
 
 
-    [HttpPut(Name = "ActivateUser")]
-    [Route("activated")]
+    [HttpPut("activated", Name = "ActivateUser")]
     public async Task<ActionResult> ActivateUser(ActivateUserDto activateUserDto)
     {
         var user = await _userManager.FindByEmailAsync(activateUserDto.Email);
@@ -54,15 +54,15 @@ public class UsersController(UserManager<IdentityUser> userManager, IConfigurati
         return Ok(new { user.Id, user.Email, Activated = true });
     }
 
-    [HttpPost(Name = "LoginUser")]
-    [Route("login")]
+    [HttpPost("login", Name = "LoginUser")]
     public async Task<ActionResult> LoginUser(LoginUserDto loginUserDto)
     {
         var user = await _userManager.FindByEmailAsync(loginUserDto.Email);
         if (user == null || !await _userManager.CheckPasswordAsync(user, loginUserDto.Password))
             return Unauthorized();
 
-        var claims = await _userManager.GetClaimsAsync(user);
+        var principal = await _userClaimsPrincipalFactory.CreateAsync(user);
+        var claims = principal.Claims;
 
         var jwtKey = _config["Jwt:Key"]!;
         var jwtIssuer = _config["Jwt:Issuer"]!;
