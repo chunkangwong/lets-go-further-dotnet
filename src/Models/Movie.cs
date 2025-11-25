@@ -7,10 +7,10 @@ public class Movie
 {
 
     [Column("id")]
-    public int Id { get; set; }
+    public int? Id { get; set; }
 
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
     [Column("title")]
     [MaxLength(500)]
@@ -35,14 +35,14 @@ public class Movie
 
 
     [Column("version")]
-    public int Version { get; set; }
+    public int? Version { get; set; }
 }
 
 public class UpdateMovieDto
 {
     public string Title { get; set; } = string.Empty;
-    public int Year { get; set; }
-    public int RunTime { get; set; }
+    public int? Year { get; set; }
+    public int? RunTime { get; set; }
     public List<string> Genres { get; set; } = [];
 }
 
